@@ -30,7 +30,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.AI_API_KEY }}
         with:
           # Modelo do Gemini a ser utilizado (Flash é rápido e econômico)
-          model: gemini-1.5-flash
+          model: gemini-2.5-flash
           
           # Chave da API do Gemini (IMPORTANTE: usar hífen, não underscore)
           gemini-key: ${{ secrets.AI_API_KEY }}
