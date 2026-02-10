@@ -1,5 +1,6 @@
 name: AI Code Review
 
+# Trigger: executa quando um Pull Request é aberto ou atualizado
 on:
   pull_request:
     types: [opened, synchronize]
@@ -7,24 +8,37 @@ on:
 jobs:
   review:
     runs-on: ubuntu-latest
+    
+    # Permissões necessárias para o job
     permissions:
-      contents: read
-      pull-requests: write # Necessário para comentar no PR
+      contents: read          # Permite ler o conteúdo do repositório
+      pull-requests: write    # Permite comentar no Pull Request
+
     steps:
+      # Passo 1: Faz checkout do código do repositório
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0      # Busca todo o histórico para análise completa
 
+      # Passo 2: Executa a revisão de código com Gemini AI
+      # Documentação completa: https://github.com/sshnaidm/gemini-code-review-action#configuration-options
       - name: Gemini Flash Reviewer
         uses: sshnaidm/gemini-code-review-action@v1
         env:
+          # Define a variável de ambiente que a action espera
           GEMINI_API_KEY: ${{ secrets.AI_API_KEY }}
         with:
+          # Modelo do Gemini a ser utilizado (Flash é rápido e econômico)
           model: gemini-1.5-flash
-          gemini_api_key: ${{ secrets.AI_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          language: Portuguese
+          
+          # Chave da API do Gemini (IMPORTANTE: usar hífen, não underscore)
+          gemini-key: ${{ secrets.AI_API_KEY }}
+          
+          # Token do GitHub para autenticação (opcional, usa o padrão se omitido)
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Prompt customizado para o revisor de código
           prompt: |
             Aja como um Engenheiro de Segurança Sênior (DevSecOps). 
             Analise o DIFF deste Pull Request buscando:
