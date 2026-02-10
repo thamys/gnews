@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
 
       - name: Gemini Flash Reviewer
-        uses: sshnaidm/gemini-code-review-action@v0.12.0
+        uses: sshnaidm/gemini-code-review-action@v1
         with:
           model: gemini-1.5-flash
           gemini_api_key: ${{ secrets.AI_API_KEY }}
