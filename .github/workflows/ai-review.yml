@@ -24,6 +24,7 @@ jobs:
       # Passo 2: Executa a revisão de código com Gemini AI
       # Documentação completa: https://github.com/sshnaidm/gemini-code-review-action#configuration-options
       - name: Gemini Flash Reviewer
+        id: gemini-review
         uses: sshnaidm/gemini-code-review-action@v1
         env:
           # Define a variável de ambiente que a action espera
@@ -40,9 +41,43 @@ jobs:
           
           # Prompt customizado para o revisor de código
           prompt: |
-            Aja como um Engenheiro de Segurança Sênior (DevSecOps). 
-            Analise o DIFF deste Pull Request buscando:
-            1. Vulnerabilidades OWASP Top 10 (especialmente SQL Injection e Insecure Deserialization).
-            2. Code Smells e complexidade ciclomática desnecessária.
-            3. Aderência às melhores práticas de Java 25 e Spring Boot 3.4.
-            4. Responda com comentários técnicos e construtivos diretamente nas linhas do código afetado.
+            Você é um Engenheiro de Segurança Sênior (DevSecOps).
+            
+            IMPORTANTE: NÃO repita o diff completo na sua resposta.
+            
+            Analise APENAS as mudanças do código e responda de forma CONCISA:
+            
+            1. Liste APENAS as vulnerabilidades encontradas no seguinte formato:
+               - **[CRÍTICO/ALTO/MÉDIO/BAIXO]** `arquivo.java:linha` - Tipo de vulnerabilidade (ex: SQL Injection - OWASP A03)
+               - Descrição breve (1-2 linhas)
+               - Recomendação de correção (1-2 linhas)
+            
+            2. Se encontrar vulnerabilidades OWASP Top 10, marque como [CRÍTICO]
+            
+            3. Code smells e complexidade ciclomática devem ser marcados como [MÉDIO] ou [BAIXO]
+            
+            4. Se NÃO houver problemas, responda apenas: "✅ Nenhuma vulnerabilidade ou problema crítico encontrado."
+            
+            Foco em: SQL Injection, Insecure Deserialization, e boas práticas Java 25/Spring Boot 3.4.
+
+      # Passo 3: Valida se há vulnerabilidades críticas e falha o workflow
+      - name: Check for Critical Vulnerabilities
+        if: always()
+        run: |
+          echo "Verificando se há vulnerabilidades críticas no código..."
+          
+          # Busca por padrões de SQL Injection no código alterado
+          if git diff HEAD~1 HEAD | grep -E "SELECT.*FROM.*WHERE.*\+.*userInput|query.*=.*\".*'.*\+"; then
+            echo "❌ CRÍTICO: SQL Injection detectado no código!"
+            echo "O merge está BLOQUEADO até que a vulnerabilidade seja corrigida."
+            exit 1
+          fi
+          
+          # Busca por concatenação de strings em queries SQL
+          if git diff HEAD~1 HEAD | grep -E "jdbcTemplate\.query\(.*\+.*\)"; then
+            echo "❌ CRÍTICO: Possível SQL Injection - uso de concatenação em query SQL!"
+            echo "Use consultas parametrizadas (PreparedStatement ou JdbcTemplate com placeholders)."
+            exit 1
+          fi
+          
+          echo "✅ Nenhuma vulnerabilidade crítica detectada. Merge permitido."
