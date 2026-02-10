@@ -18,6 +18,8 @@ jobs:
 
       - name: Gemini Flash Reviewer
         uses: sshnaidm/gemini-code-review-action@v1
+        env:
+          GEMINI_API_KEY: ${{ secrets.AI_API_KEY }}
         with:
           model: gemini-1.5-flash
           gemini_api_key: ${{ secrets.AI_API_KEY }}
